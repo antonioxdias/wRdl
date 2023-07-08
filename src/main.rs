@@ -118,6 +118,7 @@ mod board {
 
 use board::Board;
 use colored::Colorize;
+use core::result::Result;
 use rand::Rng;
 use std::io;
 
@@ -128,52 +129,61 @@ fn greet() {
     println!("\n\nHello, {}_{}ld\n\n", "w".on_yellow(), "r".on_green());
 }
 
-fn word_to_chars(word: &str) -> [char; 5] {
-    let mut response: [char; 5] = ['_'; 5];
-
-    // TODO: trim input and make sure it is 5 chars long
-
-    for (index, letter) in word.chars().into_iter().enumerate() {
-        if letter.is_alphabetic() {
-            response[index] = letter;
-        }
-    }
-
-    response
-}
-
-fn pick_response<'a>() -> (&'a str, [char; 5]) {
+fn pick_word<'a>() -> &'a str {
     let words = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
     let word = words[rand::thread_rng().gen_range(0..=words.len() - 1)];
 
     println!("The word is {}", word);
-    println!("\n\n");
+    word
+}
 
-    (word, word_to_chars(word))
+fn word_to_chars(word: &str) -> Result<[char; 5], &'static str> {
+    let mut response: [char; 5] = ['_'; 5];
+
+    let clean_word = word.trim().to_lowercase();
+
+    if clean_word.len() > 5 {
+        return Err("Guess is too long");
+    }
+
+    if clean_word.len() < 5 {
+        return Err("Guess is too small");
+    }
+
+    for (index, letter) in clean_word.chars().into_iter().enumerate() {
+        if !letter.is_alphabetic() {
+            return Err("Only letters are allowed");
+        }
+        response[index] = letter;
+    }
+
+    Ok(response)
 }
 
 fn main() {
     greet();
-    let (word, response) = pick_response();
+    let word = pick_word();
+    let response = word_to_chars(&word).unwrap();
 
     let mut board = Board::new(&response);
     println!("{}", board);
 
-    println!("\n\n");
-
     loop {
-        println!("Please input your guess.");
-
+        println!("\nMake a guess");
         let mut input = String::new();
 
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
+        io::stdin().read_line(&mut input).unwrap();
 
-        let guess = word_to_chars(&input);
+        let guess = match word_to_chars(&input) {
+            Ok(guess) => guess,
+            Err(error) => {
+                println!("{}", error);
+                continue;
+            }
+        };
 
         board.try_to_guess(guess);
-        println!("{}", board);
+        println!("\n{}", board);
 
         if guess == response {
             println!("\nGuessed in {} attempts!", board.guess_number);
@@ -187,4 +197,6 @@ fn main() {
             break;
         }
     }
+
+    println!("\n\n");
 }
