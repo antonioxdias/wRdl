@@ -40,7 +40,7 @@ mod cell {
                     write!(f, "{}", self.guess())
                 }
                 Status::Possible => {
-                    write!(f, "{}", self.guess().to_string().on_green())
+                    write!(f, "{}", self.guess().to_string().on_yellow())
                 }
                 Status::Correct => {
                     write!(f, "{}", self.guess().to_string().on_green())
@@ -52,15 +52,18 @@ mod cell {
 
 mod row {
     use crate::cell::{self, Cell};
+    use std::collections::HashMap;
     use std::fmt;
 
     pub struct Row<'a> {
+        response: &'a [char; 5],
         cells: [Cell<'a>; 5],
     }
 
     impl<'a> Row<'a> {
         pub fn new(response: &[char; 5]) -> Row {
             Row {
+                response,
                 cells: [
                     Cell::new(&response[0]),
                     Cell::new(&response[1]),
@@ -72,11 +75,26 @@ mod row {
         }
 
         pub fn make_guess(&mut self, guess: [char; 5]) {
+            let mut letter_frequencies = HashMap::new();
+            for letter in self.response.iter() {
+                let count = letter_frequencies.entry(letter).or_insert(0);
+                *count += 1;
+            }
+
             for (index, cell) in self.cells.iter_mut().enumerate() {
                 let mut status = cell::Status::Wrong;
 
-                if cell.response == &guess[index] {
+                let is_correct = &guess[index] == cell.response;
+
+                if is_correct {
                     status = cell::Status::Correct;
+                }
+
+                let is_possible = letter_frequencies.get(&guess[index]).copied().unwrap_or(0) > 0;
+                if is_possible {
+                    status = cell::Status::Possible;
+                    let count = letter_frequencies.entry(&guess[index]).or_insert(0);
+                    *count -= 1;
                 }
 
                 cell.make_guess(guess[index], status);
@@ -156,7 +174,7 @@ fn pick_word<'a>() -> &'a str {
     let words = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
     let word = words[rand::thread_rng().gen_range(0..=words.len() - 1)];
 
-    println!("The word is {}", word);
+    // println!("The word is {}", word);
     word
 }
 
@@ -181,7 +199,7 @@ fn parse_guess(input: &str) -> Result<[char; 5], &'static str> {
         return Err("Guess is too small");
     }
 
-    let possibilities = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
+    let possibilities = official_allowed_guesses::OFFICIAL_ALLOWED_GUESSES;
     if !possibilities
         .iter()
         .any(|option| clean_input.contains(option))
