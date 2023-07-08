@@ -78,7 +78,7 @@ mod board {
 
     pub struct Board<'a> {
         rows: [Row<'a>; 5],
-        guess_number: usize,
+        pub guess_number: usize,
     }
 
     impl<'a> Board<'a> {
@@ -142,19 +142,19 @@ fn word_to_chars(word: &str) -> [char; 5] {
     response
 }
 
-fn pick_response() -> [char; 5] {
+fn pick_response<'a>() -> (&'a str, [char; 5]) {
     let words = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
     let word = words[rand::thread_rng().gen_range(0..=words.len() - 1)];
 
     println!("The word is {}", word);
     println!("\n\n");
 
-    word_to_chars(word)
+    (word, word_to_chars(word))
 }
 
 fn main() {
     greet();
-    let response = pick_response();
+    let (word, response) = pick_response();
 
     let mut board = Board::new(&response);
     println!("{}", board);
@@ -174,5 +174,17 @@ fn main() {
 
         board.try_to_guess(guess);
         println!("{}", board);
+
+        if guess == response {
+            println!("\nGuessed in {} attempts!", board.guess_number);
+            println!("You {}!", "WOW".blue());
+            break;
+        }
+
+        if board.guess_number >= 5 {
+            println!("\nThe word was {}.", word.red());
+            println!("Better luck next time.");
+            break;
+        }
     }
 }
