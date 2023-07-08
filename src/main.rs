@@ -137,33 +137,50 @@ fn pick_word<'a>() -> &'a str {
     word
 }
 
-fn word_to_chars(word: &str) -> Result<[char; 5], &'static str> {
+fn word_to_chars(word: &str) -> [char; 5] {
     let mut response: [char; 5] = ['_'; 5];
 
-    let clean_word = word.trim().to_lowercase();
-
-    if clean_word.len() > 5 {
-        return Err("Guess is too long");
-    }
-
-    if clean_word.len() < 5 {
-        return Err("Guess is too small");
-    }
-
-    for (index, letter) in clean_word.chars().into_iter().enumerate() {
-        if !letter.is_alphabetic() {
-            return Err("Only letters are allowed");
-        }
+    for (index, letter) in word.chars().into_iter().enumerate() {
         response[index] = letter;
     }
 
-    Ok(response)
+    response
+}
+
+fn parse_guess(input: &str) -> Result<[char; 5], &'static str> {
+    let clean_input = input.trim().to_lowercase();
+
+    if clean_input.len() > 5 {
+        return Err("Guess is too long");
+    }
+
+    if clean_input.len() < 5 {
+        return Err("Guess is too small");
+    }
+
+    let possibilities = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
+    if !possibilities
+        .iter()
+        .any(|option| clean_input.contains(option))
+    {
+        return Err("Unknown word");
+    }
+
+    let guess = word_to_chars(&clean_input);
+
+    for letter in guess.into_iter() {
+        if !letter.is_alphabetic() {
+            return Err("Only letters are allowed");
+        }
+    }
+
+    Ok(guess)
 }
 
 fn main() {
     greet();
     let word = pick_word();
-    let response = word_to_chars(&word).unwrap();
+    let response = word_to_chars(&word);
 
     let mut board = Board::new(&response);
     println!("{}", board);
@@ -174,7 +191,7 @@ fn main() {
 
         io::stdin().read_line(&mut input).unwrap();
 
-        let guess = match word_to_chars(&input) {
+        let guess = match parse_guess(&input) {
             Ok(guess) => guess,
             Err(error) => {
                 println!("{}", error);
@@ -198,5 +215,5 @@ fn main() {
         }
     }
 
-    println!("\n\n");
+    println!("\n");
 }
