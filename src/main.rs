@@ -4,7 +4,7 @@ mod cell {
 
     pub struct Cell<'a> {
         response: &'a char,
-        guess: Option<&'a char>,
+        guess: Option<char>,
     }
 
     impl<'a> Cell<'a> {
@@ -15,15 +15,15 @@ mod cell {
             }
         }
 
-        fn guess(&self) -> &char {
-            self.guess.unwrap_or(&'_')
+        fn guess(&self) -> char {
+            self.guess.unwrap_or('_')
         }
 
         fn is_correct(&self) -> bool {
-            self.response == self.guess()
+            self.response == &self.guess()
         }
 
-        pub fn try_to_guess(&mut self, guess: &'a char) {
+        pub fn try_to_guess(&mut self, guess: char) {
             self.guess = Some(guess);
         }
     }
@@ -56,12 +56,12 @@ mod row {
             )
         }
 
-        pub fn try_to_guess(&mut self, guess: &'a [char; 5]) {
-            self.0.try_to_guess(&guess[0]);
-            self.1.try_to_guess(&guess[1]);
-            self.2.try_to_guess(&guess[2]);
-            self.3.try_to_guess(&guess[3]);
-            self.4.try_to_guess(&guess[4]);
+        pub fn try_to_guess(&mut self, guess: [char; 5]) {
+            self.0.try_to_guess(guess[0]);
+            self.1.try_to_guess(guess[1]);
+            self.2.try_to_guess(guess[2]);
+            self.3.try_to_guess(guess[3]);
+            self.4.try_to_guess(guess[4]);
         }
     }
 
@@ -95,7 +95,7 @@ mod board {
             }
         }
 
-        pub fn try_to_guess(&mut self, guess: &'a [char; 5]) {
+        pub fn try_to_guess(&mut self, guess: [char; 5]) {
             for (index, row) in self.rows.iter_mut().enumerate() {
                 if index == self.guess_number {
                     row.try_to_guess(guess);
@@ -119,6 +119,7 @@ mod board {
 use board::Board;
 use colored::Colorize;
 use rand::Rng;
+use std::io;
 
 mod official_allowed_guesses;
 mod shuffled_real_wordles;
@@ -127,48 +128,51 @@ fn greet() {
     println!("\n\nHello, {}_{}ld\n\n", "w".on_yellow(), "r".on_green());
 }
 
-fn main() {
-    greet();
-    println!("\n\n");
+fn word_to_chars(word: &str) -> [char; 5] {
+    let mut response: [char; 5] = ['_'; 5];
 
+    // TODO: trim input and make sure it is 5 chars long
+
+    for (index, letter) in word.chars().into_iter().enumerate() {
+        if letter.is_alphabetic() {
+            response[index] = letter;
+        }
+    }
+
+    response
+}
+
+fn pick_response() -> [char; 5] {
     let words = shuffled_real_wordles::SHUFFLED_REAL_WORDLES;
     let word = words[rand::thread_rng().gen_range(0..=words.len() - 1)];
 
     println!("The word is {}", word);
     println!("\n\n");
 
-    let mut response: [char; 5] = ['_'; 5];
+    word_to_chars(word)
+}
 
-    for (index, letter) in word.chars().into_iter().enumerate() {
-        response[index] = letter
-    }
-
-    println!("The response is {:?}", response);
-    println!("\n\n");
-
-    let guess0 = 'b';
-    let guess1 = 'a';
-    let guess2 = 't';
-    let guess3 = 'o';
-    let guess4 = 'n';
-    let guess = [guess0, guess1, guess2, guess3, guess4];
+fn main() {
+    greet();
+    let response = pick_response();
 
     let mut board = Board::new(&response);
     println!("{}", board);
 
     println!("\n\n");
 
-    board.try_to_guess(&guess);
-    println!("{}", board);
+    loop {
+        println!("Please input your guess.");
 
-    println!("\n\n");
+        let mut input = String::new();
 
-    let guess = ['a', guess1, guess2, guess3, guess4];
-    board.try_to_guess(&guess);
-    println!("{}", board);
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
 
-    println!("\n\n");
+        let guess = word_to_chars(&input);
 
-    board.try_to_guess(&response);
-    println!("{}", board);
+        board.try_to_guess(guess);
+        println!("{}", board);
+    }
 }
