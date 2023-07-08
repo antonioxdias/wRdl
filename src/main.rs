@@ -120,6 +120,9 @@ use board::Board;
 use colored::Colorize;
 use row::Row;
 
+mod official_allowed_guesses;
+mod shuffled_real_wordles;
+
 fn greet() {
     println!("\n\nHello, {}_{}ld\n\n", "w".on_yellow(), "r".on_green());
 }
@@ -166,4 +169,12 @@ fn main() {
 
     board.try_to_guess(&response);
     println!("{}", board);
+
+    println!("\n\n");
+
+    println!("len {}", shuffled_real_wordles::SHUFFLED_REAL_WORDLES.len());
+    println!(
+        "len {}",
+        official_allowed_guesses::OFFICIAL_ALLOWED_GUESSES.len()
+    );
 }
