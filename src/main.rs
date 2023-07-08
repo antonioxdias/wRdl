@@ -2,9 +2,16 @@ mod cell {
     use colored::Colorize;
     use std::fmt;
 
+    pub enum Status {
+        Wrong,
+        Possible,
+        Correct,
+    }
+
     pub struct Cell<'a> {
-        response: &'a char,
+        pub response: &'a char,
         guess: Option<char>,
+        status: Status,
     }
 
     impl<'a> Cell<'a> {
@@ -12,6 +19,7 @@ mod cell {
             Cell {
                 response,
                 guess: None,
+                status: Status::Wrong,
             }
         }
 
@@ -19,55 +27,70 @@ mod cell {
             self.guess.unwrap_or('_')
         }
 
-        fn is_correct(&self) -> bool {
-            self.response == &self.guess()
-        }
-
-        pub fn try_to_guess(&mut self, guess: char) {
+        pub fn make_guess(&mut self, guess: char, status: Status) {
             self.guess = Some(guess);
+            self.status = status;
         }
     }
 
     impl<'a> fmt::Display for Cell<'a> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            if self.is_correct() {
-                write!(f, "{}", self.guess().to_string().on_green())
-            } else {
-                write!(f, "{}", self.guess())
+            match self.status {
+                Status::Wrong => {
+                    write!(f, "{}", self.guess())
+                }
+                Status::Possible => {
+                    write!(f, "{}", self.guess().to_string().on_green())
+                }
+                Status::Correct => {
+                    write!(f, "{}", self.guess().to_string().on_green())
+                }
             }
         }
     }
 }
 
 mod row {
-    use crate::cell::Cell;
+    use crate::cell::{self, Cell};
     use std::fmt;
 
-    pub struct Row<'a>(Cell<'a>, Cell<'a>, Cell<'a>, Cell<'a>, Cell<'a>);
+    pub struct Row<'a> {
+        cells: [Cell<'a>; 5],
+    }
 
     impl<'a> Row<'a> {
         pub fn new(response: &[char; 5]) -> Row {
-            Row(
-                Cell::new(&response[0]),
-                Cell::new(&response[1]),
-                Cell::new(&response[2]),
-                Cell::new(&response[3]),
-                Cell::new(&response[4]),
-            )
+            Row {
+                cells: [
+                    Cell::new(&response[0]),
+                    Cell::new(&response[1]),
+                    Cell::new(&response[2]),
+                    Cell::new(&response[3]),
+                    Cell::new(&response[4]),
+                ],
+            }
         }
 
-        pub fn try_to_guess(&mut self, guess: [char; 5]) {
-            self.0.try_to_guess(guess[0]);
-            self.1.try_to_guess(guess[1]);
-            self.2.try_to_guess(guess[2]);
-            self.3.try_to_guess(guess[3]);
-            self.4.try_to_guess(guess[4]);
+        pub fn make_guess(&mut self, guess: [char; 5]) {
+            for (index, cell) in self.cells.iter_mut().enumerate() {
+                let mut status = cell::Status::Wrong;
+
+                if cell.response == &guess[index] {
+                    status = cell::Status::Correct;
+                }
+
+                cell.make_guess(guess[index], status);
+            }
         }
     }
 
     impl fmt::Display for Row<'_> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "{} {} {} {} {}", self.0, self.1, self.2, self.3, self.4)
+            write!(
+                f,
+                "{} {} {} {} {}",
+                self.cells[0], self.cells[1], self.cells[2], self.cells[3], self.cells[4]
+            )
         }
     }
 }
@@ -95,10 +118,10 @@ mod board {
             }
         }
 
-        pub fn try_to_guess(&mut self, guess: [char; 5]) {
+        pub fn make_guess(&mut self, guess: [char; 5]) {
             for (index, row) in self.rows.iter_mut().enumerate() {
                 if index == self.guess_number {
-                    row.try_to_guess(guess);
+                    row.make_guess(guess);
                 };
             }
             self.guess_number += 1;
@@ -199,7 +222,7 @@ fn main() {
             }
         };
 
-        board.try_to_guess(guess);
+        board.make_guess(guess);
         println!("\n{}", board);
 
         if guess == response {
