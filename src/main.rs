@@ -82,13 +82,13 @@ mod row {
             }
 
             for (index, cell) in self.cells.iter_mut().enumerate() {
-                let mut status = cell::Status::Wrong;
-
                 let is_correct = &guess[index] == cell.response;
-
                 if is_correct {
-                    status = cell::Status::Correct;
+                    cell.make_guess(guess[index], cell::Status::Correct);
+                    continue;
                 }
+
+                let mut status = cell::Status::Wrong;
 
                 let is_possible = letter_frequencies.get(&guess[index]).copied().unwrap_or(0) > 0;
                 if is_possible {
@@ -118,7 +118,7 @@ mod board {
     use std::fmt;
 
     pub struct Board<'a> {
-        rows: [Row<'a>; 5],
+        rows: [Row<'a>; 6],
         pub guess_number: usize,
     }
 
@@ -126,6 +126,7 @@ mod board {
         pub fn new(response: &[char; 5]) -> Board {
             Board {
                 rows: [
+                    Row::new(response),
                     Row::new(response),
                     Row::new(response),
                     Row::new(response),
@@ -199,7 +200,14 @@ fn parse_guess(input: &str) -> Result<[char; 5], &'static str> {
         return Err("Guess is too small");
     }
 
-    let possibilities = official_allowed_guesses::OFFICIAL_ALLOWED_GUESSES;
+    let possibilities = [
+        shuffled_real_wordles::SHUFFLED_REAL_WORDLES.as_slice(),
+        official_allowed_guesses::OFFICIAL_ALLOWED_GUESSES.as_slice(),
+    ]
+    .concat();
+
+    println!("len {}", possibilities.len());
+
     if !possibilities
         .iter()
         .any(|option| clean_input.contains(option))
