@@ -14,7 +14,7 @@ pub struct Cell<'a> {
 }
 
 impl<'a> Cell<'a> {
-    pub fn new(response: &'a char) -> Cell {
+    pub fn new(response: &char) -> Cell {
         Cell {
             response,
             guess: None,

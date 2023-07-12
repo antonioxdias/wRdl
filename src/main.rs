@@ -50,8 +50,6 @@ fn parse_guess(input: &str) -> Result<[char; 5], &'static str> {
     ]
     .concat();
 
-    println!("len {}", possibilities.len());
-
     if !possibilities
         .iter()
         .any(|option| clean_input.contains(option))
