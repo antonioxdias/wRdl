@@ -99,7 +99,7 @@ fn main() {
             break;
         }
 
-        if board.guess_number >= 5 {
+        if board.guess_number >= 6 {
             println!("\nThe word was {}.", word.red());
             println!("Better luck next time.");
             break;

@@ -29,17 +29,25 @@ impl<'a> Row<'a> {
         }
 
         for (index, cell) in self.cells.iter_mut().enumerate() {
+            let is_correct = &guess[index] == cell.response;
+            if is_correct {
+                let count = letter_frequencies.entry(&guess[index]).or_insert(0);
+                *count -= 1;
+                cell.make_guess(guess[index], cell::Status::Correct);
+            }
+        }
+
+        for (index, cell) in self.cells.iter_mut().enumerate() {
             let mut status = cell::Status::Wrong;
+
+            let is_correct = &guess[index] == cell.response;
+            if is_correct {
+                continue;
+            }
 
             let is_possible = letter_frequencies.get(&guess[index]).copied().unwrap_or(0) > 0;
             if is_possible {
-                let is_correct = &guess[index] == cell.response;
-                if is_correct {
-                    status = cell::Status::Correct;
-                } else {
-                    status = cell::Status::Possible;
-                }
-
+                status = cell::Status::Possible;
                 let count = letter_frequencies.entry(&guess[index]).or_insert(0);
                 *count -= 1;
             }

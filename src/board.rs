@@ -35,8 +35,8 @@ impl fmt::Display for Board<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}\n{}\n{}\n{}\n{}",
-            self.rows[0], self.rows[1], self.rows[2], self.rows[3], self.rows[4]
+            "{}\n{}\n{}\n{}\n{}\n{}",
+            self.rows[0], self.rows[1], self.rows[2], self.rows[3], self.rows[4], self.rows[5]
         )
     }
 }
