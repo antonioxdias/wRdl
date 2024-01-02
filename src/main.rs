@@ -36,6 +36,10 @@ fn word_to_chars(word: &str) -> [char; 5] {
 fn parse_guess(input: &str) -> Result<[char; 5], &'static str> {
     let clean_input = input.trim().to_lowercase();
 
+    if clean_input.len() == 0 {
+        return Err("Guess is empty");
+    }
+
     if clean_input.len() > 5 {
         return Err("Guess is too long");
     }
@@ -85,7 +89,11 @@ fn main() {
         let guess = match parse_guess(&input) {
             Ok(guess) => guess,
             Err(error) => {
-                println!("{}", error);
+                if error == "Guess is empty" {
+                    println!("\n{}", board);
+                } else {
+                    println!("{}", error);
+                }
                 continue;
             }
         };
