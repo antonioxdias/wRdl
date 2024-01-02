@@ -36,13 +36,13 @@ impl<'a> fmt::Display for Cell<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.status {
             Status::Wrong => {
-                write!(f, "{}", self.guess())
+                write!(f, "{}", self.guess().to_string().white())
             }
             Status::Possible => {
-                write!(f, "{}", self.guess().to_string().on_yellow())
+                write!(f, "{}", self.guess().to_string().black().on_yellow())
             }
             Status::Correct => {
-                write!(f, "{}", self.guess().to_string().on_green())
+                write!(f, "{}", self.guess().to_string().black().on_green())
             }
         }
     }
